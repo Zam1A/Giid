@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mongodb connection</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.10/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.10/dist/vue.js"></script>
+    <script src="index.js"></script>
+    <script src="axios.min.js"></script>
+</head>
+
+<body>
+<div id="app">
+        <el-header>
+                    <a   style="text-decoration:none;color:white;" href="index.html"><el-button icon="el-icon-arrow-left" ></el-button></a>
+        </el-header>
+    <div style="text-align: center;padding-bottom: 20px" >
+        <el-button typle="primary" @click="start()">start push</el-button>
+    </div>
+
+
+
+       <el-row>
+                <el-col :span="8">
+                    <div style="padding: 5px;">
+                            <div style="text-align: center;padding-bottom: 20px">advance</div>
+                        <el-card class="box-card" style="margin: auto;">
+                            <div style="height: 200px">
+                                {{item01.content}}
+                            </div>
+                        </el-card>
+                            <div v-if="uPush.has(item01._id)">No push</div>
+                        <el-row  style="padding-top: 20px">
+                            <el-col :span="12">
+                                <div style="text-align: left;" >
+                                    <el-button typle="primary" @click="pushApp(item01._id)">push</el-button>
+                                </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div style="text-align: right;" >
+                                     <el-button @click="denyApp(item01._id)">deny</el-button>
+                                </div>
+                            </el-col>
+                        </el-row>
+
+
+
+                    </div>
+                </el-col>
+                <el-col :span="8">
+                    <div style="padding: 5px;">
+                        <div style="text-align: center;padding-bottom: 20px">common</div>
+                        <el-card class="box-card" style="margin: auto;">
+                            <div style="height: 200px">
+                                {{item02.content}}
+                            </div>
+                        </el-card>
+                        <div v-if="uPush.has(item02._id)">No push</div>
+                        <el-row  style="padding-top: 20px">
+                            <el-col :span="12">
+                                <div style="text-align: left;" >
+                                    <el-button typle="primary" @click="pushApp(item02._id)">push</el-button>
+                                </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div style="text-align: right;" >
+                                    <el-button @click="denyApp(item02._id)">deny</el-button>
+                                </div>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </el-col>
+                <el-col :span="8">
+                    <div style="padding: 5px;">
+                        <div style="text-align: center;padding-bottom: 20px">pensioner</div>
+                            <el-card class="box-card" style="margin: auto;">
+                                <div style="height: 200px">
+                                    {{item03.content}}
+                                </div>
+                            </el-card>
+                        <div  v-if="uPush.has(item03._id)">No push</div>
+                        <el-row  style="padding-top: 20px">
+                            <el-col :span="12">
+                                <div style="text-align: left;" >
+                                    <el-button typle="primary" @click="pushApp(item03._id)">push</el-button>
+                                </div>
+                            </el-col>
+                            <el-col :span="12">
+                                <div style="text-align: right;" >
+                                    <el-button @click="denyApp(item03._id)">deny</el-button>
+                                </div>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </el-col>
+            </el-row>
+
+
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                instance: axios.create({
+                    baseURL: 'http://localhost:3000/api',
+                    timeout: 60 * 1000,
+                }),
+                content: "",
+                index: "",
+                indexArr: [1,2,3,4,5,6,7,8,9,10,11,12,13],
+                name:"",
+                levelArr:["advance","common","pensioner"],
+                level:"",
+                isPush:true,
+                data01: [],
+                data02: [],
+                data03: [],
+                item01:{},
+                item02:{},
+                item03:{},
+                uPush:new Set() ,
+                timer:"",
+                startTime:0,
+            }
+        },
+        created() {
+            let indexKey="push01#index";
+            localStorage.setItem(indexKey, -1);
+            let indexKey2="push02#index";
+            localStorage.setItem(indexKey2, -1);
+            let indexKey3="push03#index";
+            localStorage.setItem(indexKey3, -1);
+
+            let contentKey="push01#content";
+            this.setLocalStorageItem(contentKey,"")
+            let contentKey2="push02#content";
+            this.setLocalStorageItem(contentKey2,"")
+            let contentKey3="push03#content";
+            this.setLocalStorageItem(contentKey3,"")
+            this.find01();
+            this.find02();
+            this.find03();
+            localStorage.setItem("uPush", "");
+            this.setLocalStorageItem("uPush","");
+        },
+        destroyed: function(){
+            clearInterval(this.timer)
+            console.log("destroyed");
+        },
+        methods: {
+            start(){
+                if(this.timer){
+                    clearInterval(this.timer)
+                }
+                this.startTime=new Date().getTime();
+                console.log("this.startTime>>>"+this.startTime);
+                //
+                this.timer = setInterval(() => {
+                    this.push001();
+                    this.push002();
+                    this.push003();
+                }, 1000)
+            },
+            setLocalStorageItem(k,v){
+                this.instance.request({
+                    method: 'POST',
+                    url: '/setLocalStorageItem',
+                    data: {
+                        key: k,
+                        value: v,
+                    }
+                });
+            },
+            pushApp(v){
+                this.uPush.delete(v);
+                this.pushSSS();
+                localStorage.setItem("uPush", this.uPush);
+            },
+            denyApp(v){
+                this.uPush.add(v);
+                this.pushSSS();
+                localStorage.setItem("uPush", this.uPush);
+            },
+            pushSSS(){
+                let a="";
+                for (let x of this.uPush) {//将set集合中的值进行输出,let作用范围是一个块，eg:出了该for循环，let定义的内容无效
+                    a=x+","+a;
+                }
+                this.setLocalStorageItem("uPush",a);
+                this.$forceUpdate();//刷新页面
+            },
+            push001(){
+                let indexKey="push01#index";
+                let contentKey="push01#content";
+                let idKey="push01#id";
+                let time=new Date().getTime();
+                let diffTime=time-this.startTime;
+                let endTime=0;
+                console.log("diffTime>>>"+diffTime);
+                for (var i = 0; i <this.data01.length ; i++) {
+                    let item=this.data01[i];
+                    let content= this.data01[i]["content"]
+                    let id= this.data01[i]["id"]
+                    let itemTime= this.data01[i]["push_time"]
+                    console.log("item-time>>>"+itemTime);
+                    if (diffTime>parseInt(itemTime)*1000) {
+                        this.setLocalStorageItem(contentKey,content)
+                        this.setLocalStorageItem(idKey,id)
+                        this.item01={_id:id,content:content,};
+                        endTime=parseInt(itemTime)*1000;
+                    }
+                }
+                if(diffTime-endTime>=15000){
+                    this.setLocalStorageItem(contentKey,"")
+                    this.setLocalStorageItem(idKey,"")
+                    this.item01={_id:"",content:"",};
+                }
+              //  this.item01={_id:"",content:"",};
+            },
+            push002(){
+                let indexKey="push02#index";
+                let contentKey="push02#content";
+                let idKey="push02#id";
+                let time=new Date().getTime();
+                let diffTime=time-this.startTime;
+                let endTime=0;
+                console.log("diffTime>>>"+diffTime);
+                for (var i = 0; i <this.data02.length ; i++) {
+                    let item=this.data02[i];
+                    let content= this.data02[i]["content"]
+                    let id= this.data02[i]["id"]
+                    let itemTime= this.data02[i]["push_time"]
+                    console.log("item-time>>>"+itemTime);
+                    if (diffTime>parseInt(itemTime)*1000) {
+                        this.setLocalStorageItem(contentKey,content)
+                        this.setLocalStorageItem(idKey,id)
+                        this.item02={_id:id,content:content,};
+                        endTime=parseInt(itemTime)*1000;
+                    }
+                }
+                if(diffTime-endTime>=15000){
+                    this.setLocalStorageItem(contentKey,"")
+                    this.setLocalStorageItem(idKey,"")
+                    this.item02={_id:"",content:"",};
+                }
+            },
+            push003(){
+                let indexKey="push03#index";
+                let contentKey="push03#content";
+                let idKey="push03#id";
+                let time=new Date().getTime();
+                let diffTime=time-this.startTime;
+                let endTime=0;
+                console.log("diffTime>>>"+diffTime);
+                for (var i = 0; i <this.data03.length ; i++) {
+                    let item=this.data03[i];
+                    let content= this.data03[i]["content"]
+                    let id= this.data03[i]["id"]
+                    let itemTime= this.data03[i]["push_time"]
+                    console.log("item-time>>>"+itemTime);
+                    if (diffTime>parseInt(itemTime)*1000) {
+                        this.setLocalStorageItem(contentKey,content)
+                        this.setLocalStorageItem(idKey,id)
+                        this.item03={_id:id,content:content,};
+                        endTime=parseInt(itemTime)*1000;
+                    }
+                }
+                if(diffTime-endTime>=15000){
+                    this.setLocalStorageItem(contentKey,"")
+                    this.setLocalStorageItem(idKey,"")
+                    this.item03={_id:"",content:"",};
+                }
+            },
+            async find01() {
+                this.$message("Find ..");
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/find',
+                    data: {
+                        delete: true,
+                        level: "advance",
+                    }
+                });
+                this.data01.splice(0, this.data01.length)
+                if (response.data["documents"].length<0){
+                    return  false;
+                }
+                response.data["documents"].forEach((item) => {
+                    this.data01.push(item);
+                });
+                this.$message("Found ..");
+            },
+            async find02() {
+               // this.$message("Find ..");
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/find',
+                    data: {
+                        delete: true,
+                        level: "common",
+                    }
+                });
+                this.data02.splice(0, this.data02.length)
+                if (response.data["documents"].length<0){
+                    return  false;
+                }
+                response.data["documents"].forEach((item) => {
+                    this.data02.push(item);
+                });
+               // this.$message("Found ..");
+            },
+            async find03() {
+             //   this.$message("Find ..");
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/find',
+                    data: {
+                        delete: true,
+                        level: "pensioner",
+                    }
+                });
+                this.data03.splice(0, this.data03.length)
+                if (response.data["documents"].length<0){
+                    return  false;
+                }
+                response.data["documents"].forEach((item) => {
+                    this.data03.push(item);
+                });
+             //   this.$message("Found ..");
+            },
+            sortBy(property, asc) {
+                //默认升序,不能写在闭包里面，写在闭包里面是无效的……asc没反应就
+                if (asc==undefined) {
+                    asc = -1
+                } else {
+                    asc=asc ? -1 : 1
+                }
+                return function (value1, value2) {
+                    let a = value1[property]
+                    let b = value2[property]
+                    return a < b ? asc : a > b ? asc*-1 : 0
+                }
+            }
+
+        },
+    })
+</script>
+</body>
+
+</html>

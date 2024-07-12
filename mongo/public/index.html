@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mongodb connection</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.10/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.10/dist/vue.js"></script>
+    <script src="index.js"></script>
+    <script src="axios.min.js"></script>
+</head>
+
+<body>
+<div id="app">
+    <el-card class="box-card" style="margin: auto;">
+        <el-form :inline="true"  class="demo-form-inline"  label-width="200px">
+            <el-form-item label="name_of_performance">
+                <el-input v-model="name_of_performance" placeholder="name_of_performance"></el-input>
+            </el-form-item>
+            <el-form-item label="level">
+                <el-select v-model="level" placeholder="level" clearable>
+                    <el-option
+                            v-for="key in levelArr"
+                            :key="key"
+                            :label="key"
+                            :value="key">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="guide_id">
+                <el-select v-model="guide_id" placeholder="guide_id" >
+                    <el-option
+                            v-for="key in indexArr"
+                            :key="key"
+                            :label="key"
+                            :value="key">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="push_time">
+                <el-input v-model="push_time" placeholder="push_time"></el-input>
+            </el-form-item>
+            <el-form-item label="content">
+                <el-input
+                        type="textarea"
+                        :rows="2"
+                        placeholder="content"
+                        v-model="content">
+                </el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="insertOne">add</el-button>
+                <el-button  type="primary"><a  style="text-decoration:none;color:white;"  href="push.html">push</a></el-button>
+            </el-form-item>
+        </el-form>
+
+        <el-table
+                :data="data"
+                stripe
+                style="width: 100%">
+            <el-table-column
+                    fixed="right"
+                    label="operation"
+                    width="120">
+                <template slot-scope="scope">
+                    <el-button
+                            @click.native.prevent="onSelect(scope.row)"
+                            type="text"
+                            size="small">
+                        del
+                    </el-button>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    prop="level"
+                    label="level"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    prop="name_of_performance"
+                    label="name_of_performance"
+                    width="400">
+            </el-table-column>
+            <el-table-column
+                    prop="guide_id"
+                    label="guide_id"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    prop="push_time"
+                    label="push_time"
+                    width="100">
+            </el-table-column>
+            <el-table-column
+                    prop="content"
+                    label="content"
+                 >
+            </el-table-column>
+        </el-table>
+
+
+<!--        <el-row v-for="item in data">
+            <el-col :span="2">
+                <el-tag type="info">{{ item.level }}</el-tag>
+            </el-col>
+            <el-col :span="6">
+                <el-tag type="info">{{ item.name_of_performance }}</el-tag>
+            </el-col>
+            <el-col :span="2">
+                <el-tag type="info">{{ item.guide_id }}</el-tag>
+            </el-col>
+            <el-col :span="2">
+                <el-tag type="info">{{ item.push_time }}</el-tag>
+            </el-col>
+            <el-col :span="6">
+                <el-tag type="info">{{ item.content }}</el-tag>
+            </el-col>
+            <el-col :span="4">
+                <el-row>
+&lt;!&ndash;                    <el-tag type="info">删除</el-tag>&ndash;&gt;
+                    <el-tag type="info" @click="onSelect(item)">del</el-tag>
+                </el-row>
+            </el-col>
+        </el-row>-->
+
+    </el-card>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                instance: axios.create({
+                    baseURL: 'http://localhost:3000/api',
+                    timeout: 60 * 1000,
+                }),
+                content: "",
+                push_time:"0",
+                guide_id: "",
+                indexArr: [1,2,3,4,5,6,7,8,9,10,11,12,13],
+                name_of_performance:"",
+                levelArr:["advance","common","pensioner"],
+                level:"",
+                data: [],
+                timerKey:new Set() ,
+            }
+        },
+        created() {
+            this.find()
+        },
+        destroyed: function(){
+            clearInterval(timer)
+            console.log("destroyed");
+        },
+        methods: {
+            deleteRow(row) {
+                alert(row)
+                //rows.splice(index, 1);
+            },
+            async find() {
+                this.$message("Find ..");
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/find',
+                    data: {
+                        delete: true,
+                    }
+                });
+                this.data.splice(0, this.data.length)
+        //.sort(this.sortBy('level',true))
+                response.data["documents"].forEach((item) => {
+                    this.data.push(item);
+                });
+                //this.$message("Found ..");
+            },
+            async insertOne() {
+                this.$message("Insert ..");
+                if (!this.content) return;
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/insertOne',
+                    data: {
+                        content: this.content,
+                        name_of_performance: this.name_of_performance,
+                        guide_id: parseInt(this.guide_id),
+                        push_time: parseInt(this.push_time),
+                        level: this.level,
+                        delete: true,//删除标识
+                    }
+                });
+                console.log(response);
+                this.$message("Inserted ..");
+                //
+                this.find();
+            },
+            async resetSelect(item) {
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/updateOne',
+                    data: {
+                        filter: {
+                            _id: { $oid: item._id },
+                            delete: true,
+                        },
+                        update: {
+                            $set: {
+                                delete: false,
+                            }
+                        }
+                    }
+                });
+                console.log(response);
+            },
+            async setSelect(item) {
+                const response = await this.instance.request({
+                    method: 'POST',
+                    url: '/updateOne',
+                    data: {
+                        filter: {
+                            _id: { $oid: item._id },
+                        },
+                        update: {
+                            $set: {
+                                delete: true,
+                            }
+                        }
+                    }
+                });
+                console.log(response);
+            },
+            async onSelect(item) {
+                this.$message("Push ..");
+                await this.resetSelect(item);
+              //  await this.setSelect(item);
+                this.$message("Pushed ..");
+                this.find();
+            },
+            async onSelect(item) {
+                this.$message("Push ..");
+                await this.resetSelect(item);
+                //  await this.setSelect(item);
+                this.$message("Pushed ..");
+                this.find();
+            },
+            sortBy(property, asc) {
+                //默认升序,不能写在闭包里面，写在闭包里面是无效的……asc没反应就
+                if (asc==undefined) {
+                    asc = -1
+                } else {
+                    asc=asc ? -1 : 1
+                }
+                return function (value1, value2) {
+                    let a = value1[property]
+                    let b = value2[property]
+                    return a < b ? asc : a > b ? asc*-1 : 0
+                }
+            }
+
+        },
+    })
+</script>
+</body>
+
+</html>

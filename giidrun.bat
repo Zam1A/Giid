@@ -1,0 +1,1 @@
+C:\Users\Yen\AppData\Local\Android\Sdk\emulator\emulator.exe -netdelay none -netspeed full -avd Nexus_5X_API_31
